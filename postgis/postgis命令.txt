@@ -1,0 +1,56 @@
+
+http://live.osgeo.org/zh/quickstart/postgis_quickstart.html
+http://postgis.net/docs/manual-2.4/postgis_installation.html#create_new_db
+http://blog.csdn.net/u013323965/article/details/52191908
+#常用操作命令
+http://blog.csdn.net/u010856284/article/details/70142810
+#登陆postgres
+/home/postgres/pgsql/bin/psql
+#创建数据库
+
+CREATE DATABASE demo;
+#添加空间扩展
+/home/postgres/pgsql/bin/psql -d demo -c "CREATE EXTENSION postgis;"
+/home/postgres/pgsql/bin/psql -d demo -c "CREATE EXTENSION postgis_topology;"
+/home/postgres/pgsql/bin/psql -d demo -c "CREATE?EXTENSION?postgis_sfcgal;"
+#/home/postgres/pgsql/bin/psql -d demo -c "CREATE?EXTENSION?fuzzystrmatch;"??
+#/home/postgres/pgsql/bin/psql -d demo -c "CREATE?EXTENSION?address_standardizer;"?
+#/home/postgres/pgsql/bin/psql -d demo -c "CREATE?EXTENSION?address_standardizer_data_us;"??
+#/home/postgres/pgsql/bin/psql -d demo -c "CREATE?EXTENSION?postgis_tiger_geocoder;"
+#/home/postgres/pgsql/bin/psql -d demo -f  legacy.sql
+
+-----------------------------------------
+--创建序列
+ CREATE SEQUENCE public.seq_map_point_station INCREMENT 1 MINVALUE 1MAXVALUE 9223372036854775807 START 1 CACHE 1;
+ ALTER TABLE public.seq_map_point_station OWNER TO postgres;
+--创建表
+CREATE TABLE public.map_point_station ( id integer, name varchar(50) );
+SELECT AddGeometryColumn ('map_point_station', 'the_geom', 4326, 'POINT', 2);
+INSERT INTO map_point_station (id, the_geom, name) VALUES (nextval('seq_map_point_station'::regclass),ST_GeomFromText('POINT(108.36744 22.8104)',4326),'琅东客运站');
+
+   --查询数据
+SELECT id,name, ST_AsText(the_geom), ST_AsEwkt(the_geom), ST_X(the_geom), ST_Y(the_geom) FROM map_point_station;
+
+ --------------------------------------------------------------
+ CREATE TABLE public.map_spc_grid24
+(
+  gid integer NOT NULL DEFAULT nextval('map_spc_grid24_gid_seq'::regclass),
+  geom geometry(MultiPolygon,4326),
+  CONSTRAINT map_spc_grid24_pkey PRIMARY KEY (gid)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE public.map_spc_grid24
+  OWNER TO postgres;
+GRANT ALL ON TABLE public.map_spc_grid24 TO postgres;
+GRANT ALL ON TABLE public.map_spc_grid24 TO public;
+
+-- Index: public.map_spc_grid24_geom_idx
+
+-- DROP INDEX public.map_spc_grid24_geom_idx;
+
+CREATE INDEX map_spc_grid24_geom_idx
+  ON public.map_spc_grid24
+  USING gist
+  (geom);
